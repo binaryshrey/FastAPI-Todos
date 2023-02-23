@@ -21,6 +21,20 @@ async def get_todos(api_key: str = Security(get_users_api_key), db: Session = De
     return db.query(models.TodoEntity).filter(models.TodoEntity.owner_id == user_id).all()
 
 
+@app.post('/todos', status_code=status.HTTP_201_CREATED)
+async def add_todo(todo: Todo, api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
+    user_id = db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).first().id
+    new_todo = models.TodoEntity()
+    new_todo.title = todo.title
+    new_todo.description = todo.description
+    new_todo.is_complete = todo.is_complete
+    new_todo.priority = todo.priority
+    new_todo.owner_id = user_id
+    db.add(new_todo)
+    db.commit()
+    return {'message': 'new todo added!'}
+
+
 @app.post('/api_key')
 async def get_api_key(user: User, db: Session = Depends(get_db)):
     existing_user = db.query(models.UserEntity).filter(models.UserEntity.email == user.email).first()
