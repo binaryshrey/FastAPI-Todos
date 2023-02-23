@@ -35,6 +35,23 @@ async def add_todo(todo: Todo, api_key: str = Security(get_users_api_key), db: S
     return {'message': 'new todo added!'}
 
 
+@app.put('/todos', status_code=status.HTTP_201_CREATED)
+async def update_todo(todoID: int, todo: Todo, api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
+    user_id = db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).first().id
+    todo_to_update = db.query(models.TodoEntity).filter(models.TodoEntity.id == todoID).first()
+
+    if not todo_to_update:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Todo not found!")
+
+    todo_to_update.title = todo.title
+    todo_to_update.description = todo.description
+    todo_to_update.is_complete = todo.is_complete
+    todo_to_update.priority = todo.priority
+    db.add(todo_to_update)
+    db.commit()
+    return {'message': 'todo updated!'}
+
+
 @app.post('/api_key')
 async def get_api_key(user: User, db: Session = Depends(get_db)):
     existing_user = db.query(models.UserEntity).filter(models.UserEntity.email == user.email).first()
