@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Depends, Security, HTTPException, status
 import secrets
 from db import models
+from db.database import engine
 from db.schemas import User, Todo
 from sqlalchemy.orm import Session
-from db.database import engine, SessionLocal
 from utils.utility import get_admin_api_key,get_users_api_key, get_db
 
 app = FastAPI()
