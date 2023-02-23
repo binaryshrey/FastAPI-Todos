@@ -15,6 +15,13 @@ async def get_users(api_key: str = Security(get_admin_api_key), db: Session = De
     return db.query(models.UserEntity).all()
 
 
+@app.delete('/users', status_code=status.HTTP_202_ACCEPTED)
+async def delete_user(api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
+    db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).delete()
+    db.commit()
+    return {'message': 'user deleted!'}
+
+
 @app.get('/todos')
 async def get_todos(api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
     user_id = db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).first().id
