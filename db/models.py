@@ -7,7 +7,6 @@ class UserEntity(Base):
     __tablename__ = "users_table"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_name = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     is_active = Column(Boolean, default=True)
     api_key = Column(String, index=True)
