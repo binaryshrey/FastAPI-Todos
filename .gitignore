@@ -2,3 +2,4 @@
 __pycache__
 fastapienv
 .DS_Store
+/db/todos.db
