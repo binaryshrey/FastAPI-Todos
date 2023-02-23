@@ -23,6 +23,9 @@ async def get_todos(api_key: str = Security(get_users_api_key), db: Session = De
 
 @app.post('/todos', status_code=status.HTTP_201_CREATED)
 async def add_todo(todo: Todo, api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
+    if not todo:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bad request!")
+
     user_id = db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).first().id
     new_todo = models.TodoEntity()
     new_todo.title = todo.title
@@ -35,10 +38,13 @@ async def add_todo(todo: Todo, api_key: str = Security(get_users_api_key), db: S
     return {'message': 'new todo added!'}
 
 
-@app.put('/todos', status_code=status.HTTP_201_CREATED)
+@app.put('/todos', status_code=status.HTTP_202_ACCEPTED)
 async def update_todo(todoID: int, todo: Todo, api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
+    if not todo or not todoID:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bad request!")
+
     user_id = db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).first().id
-    todo_to_update = db.query(models.TodoEntity).filter(models.TodoEntity.id == todoID).first()
+    todo_to_update = db.query(models.TodoEntity).filter(models.TodoEntity.id == todoID).filter(models.TodoEntity.owner_id == user_id).first()
 
     if not todo_to_update:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Todo not found!")
@@ -50,6 +56,22 @@ async def update_todo(todoID: int, todo: Todo, api_key: str = Security(get_users
     db.add(todo_to_update)
     db.commit()
     return {'message': 'todo updated!'}
+
+
+@app.delete('/todos', status_code=status.HTTP_202_ACCEPTED)
+async def delete_todo(todoID: int, api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
+    if not todoID:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bad request!")
+
+    user_id = db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).first().id
+    todo_to_delete = db.query(models.TodoEntity).filter(models.TodoEntity.id == todoID).filter(models.TodoEntity.owner_id == user_id).first()
+
+    if not todo_to_delete:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Todo not found!")
+
+    db.query(models.TodoEntity).filter(models.TodoEntity.id == todoID).filter(models.TodoEntity.owner_id == user_id).delete()
+    db.commit()
+    return {'message': 'todo deleted!'}
 
 
 @app.post('/api_key')
