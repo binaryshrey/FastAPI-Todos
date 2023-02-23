@@ -4,15 +4,21 @@ from db import models
 from db.schemas import User, Todo
 from sqlalchemy.orm import Session
 from db.database import engine, SessionLocal
-from utils.utility import get_api_key, get_db
+from utils.utility import get_admin_api_key,get_users_api_key, get_db
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 
 @app.get('/users')
-async def get_users(api_key: str = Security(get_api_key), db: Session = Depends(get_db)):
+async def get_users(api_key: str = Security(get_admin_api_key), db: Session = Depends(get_db)):
     return db.query(models.UserEntity).all()
+
+
+@app.get('/todos')
+async def get_todos(api_key: str = Security(get_users_api_key), db: Session = Depends(get_db)):
+    user_id = db.query(models.UserEntity).filter(models.UserEntity.api_key == api_key).first().id
+    return db.query(models.TodoEntity).filter(models.TodoEntity.owner_id == user_id).all()
 
 
 @app.post('/api_key')
