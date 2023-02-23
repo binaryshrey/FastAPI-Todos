@@ -1,31 +1,22 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Security, HTTPException, status
 import secrets
 from db import models
 from db.schemas import User, Todo
 from sqlalchemy.orm import Session
 from db.database import engine, SessionLocal
+from utils.utility import get_api_key, get_db
 
 app = FastAPI()
-
 models.Base.metadata.create_all(bind=engine)
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-# @app.get('/')
-# async def hello():
-#     return {'message': 'Hello FastAPI'}
+@app.get('/users')
+async def get_users(api_key: str = Security(get_api_key), db: Session = Depends(get_db)):
+    return db.query(models.UserEntity).all()
 
 
 @app.post('/api_key')
 async def get_api_key(user: User, db: Session = Depends(get_db)):
-
     existing_user = db.query(models.UserEntity).filter(models.UserEntity.email == user.email).first()
     if existing_user:
         return {'api_key': db.query(models.UserEntity).filter(models.UserEntity.email == user.email).first().api_key}
