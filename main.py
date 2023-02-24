@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, Security, HTTPException, status
+import uvicorn
 import secrets
 from db import models
 from db.database import engine
@@ -8,6 +9,11 @@ from utils.utility import get_admin_api_key,get_users_api_key, get_db
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
+
+
+@app.get('/')
+async def welcome():
+    return {'message': 'FastAPI TODO-App v1'}
 
 
 @app.get('/users')
@@ -94,3 +100,7 @@ async def get_api_key(user: User, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     return {'api_key': new_user.api_key}
+
+
+if __name__ == '__main__':
+    uvicorn.run('main:app', host='0.0.0.0', port=80, log_level='info')
